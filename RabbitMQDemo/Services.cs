@@ -66,9 +66,14 @@ namespace RabbitMQDemo
                     var message = Encoding.UTF8.GetString(body);
                     Console.WriteLine(" [x] Received {0}", message);
                 };
-                channel.BasicConsume(queue: queueName,
+                while (true)
+                {
+                    channel.BasicConsume(queue: queueName,
                                      autoAck: true,
                                      consumer: consumer);
+                    Thread.Sleep(100);
+                }
+                
             }
             Console.WriteLine(" Press [enter] to exit.");
             Console.ReadLine();
