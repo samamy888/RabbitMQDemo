@@ -23,12 +23,17 @@ namespace RabbitMQDemo
                 Password = _config.Password
             };
         }
-        public void SendQueue(string queueName,string message)
+        public void SendQueue(string queueName,string message,string exchange="")
         {
 
             using (var connection = _factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
+                if (!string.IsNullOrEmpty(exchange))
+                {
+                    channel.ExchangeDeclare(exchange: exchange,
+                                   type: "topic");
+                }
                 channel.QueueDeclare(queue: queueName,
                                      durable: false,
                                      exclusive: false,
@@ -37,7 +42,7 @@ namespace RabbitMQDemo
 
                 var body = Encoding.UTF8.GetBytes(message);
 
-                channel.BasicPublish(exchange: "",
+                channel.BasicPublish(exchange: exchange,
                                      routingKey: queueName,
                                      basicProperties: null,
                                      body: body);
@@ -47,12 +52,13 @@ namespace RabbitMQDemo
             Console.WriteLine(" Press [enter] to exit.");
             Console.ReadLine();
         }
-
-        public void ReceivingQueue(string queueName)
+        
+        public void ReceivingQueue(string queueName, string exchange = "")
         {
             using (var connection = _factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
+                
                 channel.QueueDeclare(queue: queueName,
                                      durable: false,
                                      exclusive: false,

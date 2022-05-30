@@ -17,11 +17,12 @@ namespace RabbitMQDemo
         public async Task Run()
         {
             var queueName = "Hello";
-            var message = "Hello world";
+            var message = "Hello world3";
+            var exchange = "test";
 #if DEBUG
             _services.SendQueue(queueName, message);
 #else
-            _services.ReceivingQueue(queueName);
+            _services.ReceivingQueue(queueName,exchange);
 #endif
         }
     }
