@@ -7,13 +7,13 @@ using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace RabbitMQDemo
+namespace Lib.RabbitMQ
 {
-    public class Services
+    public class QueueClient
     {
         private readonly QueueConnectionSettings _config;
         private readonly ConnectionFactory _factory;
-        public Services(IOptions<QueueConnectionSettings> config)
+        public QueueClient(IOptions<QueueConnectionSettings> config)
         {
             _config = config.Value;
             _factory = new ConnectionFactory()
@@ -23,7 +23,7 @@ namespace RabbitMQDemo
                 Password = _config.Password
             };
         }
-        public void SendQueue(string queueName,string message,string exchange="")
+        public void SendQueue(string queueName, string message, string exchange = "")
         {
 
             using (var connection = _factory.CreateConnection())
@@ -34,31 +34,29 @@ namespace RabbitMQDemo
                     channel.ExchangeDeclare(exchange: exchange,
                                    type: "topic");
                 }
-                channel.QueueDeclare(queue: queueName,
-                                     durable: false,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
+                //channel.QueueDeclare(queue: queueName,
+                //                     durable: false,
+                //                     exclusive: false,
+                //                     autoDelete: false,
+                //                     arguments: null);
 
                 var body = Encoding.UTF8.GetBytes(message);
 
-                channel.BasicPublish(exchange: exchange,
-                                     routingKey: queueName,
-                                     basicProperties: null,
-                                     body: body);
+                channel.BasicPublish(String.Empty,
+                                     queueName,
+                                     true,
+                                     channel.CreateBasicProperties(),
+                                     body);
                 Console.WriteLine(" [x] Sent {0}", message);
             }
-
-            Console.WriteLine(" Press [enter] to exit.");
-            Console.ReadLine();
         }
-        
+
         public void ReceivingQueue(string queueName, string exchange = "")
         {
             using (var connection = _factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                
+
                 channel.QueueDeclare(queue: queueName,
                                      durable: false,
                                      exclusive: false,
@@ -79,7 +77,7 @@ namespace RabbitMQDemo
                                      consumer: consumer);
                     Thread.Sleep(100);
                 }
-                
+
             }
             Console.WriteLine(" Press [enter] to exit.");
             Console.ReadLine();

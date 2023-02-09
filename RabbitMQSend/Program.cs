@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Lib.RabbitMQ;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RabbitMQDemo;
+using RabbitMQSend;
 using System.Threading.Tasks;
 
 static void ConfigureServices(IServiceCollection services)
@@ -20,7 +21,7 @@ static void ConfigureServices(IServiceCollection services)
     .Build();
 
     // add app
-    services.AddScoped<Services>();
+    services.AddScoped<QueueClient>();
     services.Configure<QueueConnectionSettings>(builder.GetSection("QueueConnectionSettings"));
     services.AddTransient<App>();
 }
