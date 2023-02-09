@@ -34,11 +34,11 @@ namespace Lib.RabbitMQ
                     channel.ExchangeDeclare(exchange: exchange,
                                    type: "topic");
                 }
-                //channel.QueueDeclare(queue: queueName,
-                //                     durable: false,
-                //                     exclusive: false,
-                //                     autoDelete: false,
-                //                     arguments: null);
+                channel.QueueDeclare(queue: queueName,
+                                     durable: false,
+                                     exclusive: false,
+                                     autoDelete: false,
+                                     arguments: null);
 
                 var body = Encoding.UTF8.GetBytes(message);
 
