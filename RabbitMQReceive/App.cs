@@ -19,7 +19,7 @@ namespace RabbitMQReceive
         {
             var queueName = "TestQ";
 
-            _queueClient.ReceivingQueue(queueName);
+            await _queueClient.ReceivingQueue(queueName);
         }
     }
 }

@@ -51,7 +51,7 @@ namespace Lib.RabbitMQ
             }
         }
 
-        public void ReceivingQueue(string queueName, string exchange = "")
+        public async Task ReceivingQueue(string queueName, string exchange = "")
         {
             using (var connection = _factory.CreateConnection())
             using (var channel = connection.CreateModel())
@@ -62,25 +62,26 @@ namespace Lib.RabbitMQ
                                      exclusive: false,
                                      autoDelete: false,
                                      arguments: null);
+                channel.BasicQos(0, 1, false);
 
                 var consumer = new EventingBasicConsumer(channel);
-                consumer.Received += (model, ea) =>
+                Console.WriteLine("等候消息中");
+                consumer.Received += async(model, ea) =>
                 {
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
-                    Console.WriteLine(" [x] Received {0}", message);
+                    Console.WriteLine("Received {0} ， Time = {1}", message, DateTime.Now.ToString("mm:ss fff"));
+                    await Task.Delay(1000);
+                    //Console.WriteLine("Wait {0} Done， Time = {1}", message, DateTime.Now.ToString("mm:ss fff"));
                 };
                 while (true)
                 {
                     channel.BasicConsume(queue: queueName,
                                      autoAck: true,
                                      consumer: consumer);
-                    Thread.Sleep(100);
+                    await Task.Delay(100);
                 }
-
             }
-            Console.WriteLine(" Press [enter] to exit.");
-            Console.ReadLine();
         }
     }
 }

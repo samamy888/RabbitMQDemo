@@ -17,15 +17,19 @@ namespace RabbitMQSend
         }
         public async Task Run()
         {
-            var queueName = "TestQ";
-
-            for(int i = 0; i <= _config.Times; i++)
+            await Task.Run(() =>
             {
-                _queueClient.SendQueue(queueName, i.ToString());
-                Console.WriteLine("times = {0}", i);
-                Thread.Sleep(_config.Sleep);
-            }
+                var queueName = "TestQ";
+                var message = "Test";
 
+                for (int i = 0; i <= _config.Times; i++)
+                {
+
+                    _queueClient.SendQueue(queueName, i.ToString());
+                    Console.WriteLine("times = {0}", i);
+                    Thread.Sleep(_config.Sleep);
+                }
+            });
         }
     }
 }
