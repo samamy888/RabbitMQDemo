@@ -16,7 +16,7 @@ namespace RabbitMQSend
             _config = config.Value;
             _queueClient = queueClient;
         }
-        public async Task Run()
+        public void Run()
         {
 
             //var queueName = "[Logistics] E-Can Make Txt and Uploading";

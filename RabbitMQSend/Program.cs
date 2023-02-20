@@ -32,4 +32,4 @@ ConfigureServices(services);
 using var serviceProvider = services.BuildServiceProvider();
 
 // entry to run app
-await serviceProvider.GetService<App>().Run();
+serviceProvider.GetService<App>()!.Run();
