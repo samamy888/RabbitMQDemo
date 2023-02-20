@@ -1,7 +1,8 @@
 ﻿using Lib.RabbitMQ;
 using Microsoft.Extensions.Options;
 using System;
-using System.Threading.Tasks;
+using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 
 namespace RabbitMQSend
 {
@@ -17,19 +18,17 @@ namespace RabbitMQSend
         }
         public async Task Run()
         {
-            await Task.Run(() =>
+
+            //var queueName = "[Logistics] E-Can Make Txt and Uploading";
+            var queueName = "TestQ";
+            var message = "Test";
+
+            for (int i = 0; i <= _config.Times; i++)
             {
-                var queueName = "TestQ";
-                var message = "Test";
-
-                for (int i = 0; i <= _config.Times; i++)
-                {
-
-                    _queueClient.SendQueue(queueName, i.ToString());
-                    Console.WriteLine("times = {0}", i);
-                    Thread.Sleep(_config.Sleep);
-                }
-            });
+                var result = _queueClient.SendQueueAndWaitReply(queueName, message + i.ToString()).FirstAsync().ToTask().Result;
+                Console.WriteLine("times = {0}", i);
+                Thread.Sleep(_config.Sleep);
+            }
         }
     }
 }

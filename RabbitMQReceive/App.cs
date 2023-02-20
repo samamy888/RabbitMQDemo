@@ -1,6 +1,7 @@
 ﻿using Lib.RabbitMQ;
 using Microsoft.Extensions.Options;
 using System;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 
 namespace RabbitMQReceive
@@ -18,8 +19,13 @@ namespace RabbitMQReceive
         public async Task Run()
         {
             var queueName = "TestQ";
+            Console.WriteLine("等候消息中");
 
-            await _queueClient.ReceivingQueue(queueName);
+            while (true)
+            {
+                await _queueClient.ReceivingQueue(queueName,true);
+                await Task.Delay(100);
+            }
         }
     }
 }

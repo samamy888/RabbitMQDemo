@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -18,17 +20,18 @@ namespace Lib.RabbitMQ
         public QueueClient(IOptions<QueueConnectionSettings> config)
         {
             _config = config.Value;
-            Connect(_config);
+            Connect();
         }
 
-        public void SendQueue(string queueName, string message, string exchange = "")
+        public void SendQueue(string queueName, string message, string replyTo = "")
         {
 
             QueueDeclare(queueName);
 
             var body = Encoding.UTF8.GetBytes(message);
             var properties = _channel.CreateBasicProperties();
-            properties.Persistent = true;
+            properties.ReplyTo = replyTo;
+            properties.CorrelationId = Guid.NewGuid().ToString();
             _channel.BasicPublish(
                 exchange: string.Empty,
                 routingKey: queueName,
@@ -36,34 +39,59 @@ namespace Lib.RabbitMQ
                 basicProperties: properties,
                 body: body);
 
-            Console.WriteLine(" [x] Sent {0}", message);
+            Console.WriteLine("{0} Sent {1}", queueName, message);
 
         }
 
-        public async Task ReceivingQueue(string queueName, string exchange = "")
+        public IObservable<string> ReceivingQueue(string queueName, bool listener = false)
         {
             QueueDeclare(queueName);
 
             var consumer = new EventingBasicConsumer(_channel);
-            Console.WriteLine("等候消息中");
-            consumer.Received += async (model, ea) =>
+            var subject = new ReplaySubject<string>();
+            var replyQueue = _channel.QueueDeclare().QueueName;
+            consumer.Received += (model, ea) =>
             {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
-                Console.WriteLine("Received {0} ， Time = {1}", message, DateTime.Now.ToString("mm:ss fff"));
-                await Task.Delay(1000);
-            };
-            while (true)
-            {
-                _channel.BasicConsume(queue: queueName,
-                                 autoAck: true,
-                                 consumer: consumer);
-                await Task.Delay(100);
-            }
 
+                if (listener)
+                {
+                    var replyProps = _channel.CreateBasicProperties();
+                    replyProps.CorrelationId = ea.BasicProperties.CorrelationId;
+                    _channel.BasicPublish(
+                        exchange: string.Empty,
+                        routingKey: ea.BasicProperties.ReplyTo,
+                        mandatory: true,
+                        basicProperties: replyProps,
+                        body: body
+                    );
+                }
+
+                subject.OnNext(message);
+                Console.WriteLine("Received {0} ， Time = {1}", message, DateTime.Now.ToString("mm:ss fff"));
+            };
+
+            _channel.BasicConsume(
+                queue: queueName,
+                autoAck: true,
+                consumer: consumer
+            );
+
+            return subject.AsObservable();
         }
 
-        private void Connect(QueueConnectionSettings settings)
+        public IObservable<string> SendQueueAndWaitReply(string queueName, string message)
+        {
+            var subject = new ReplaySubject<string>();
+            var replyQueue = _channel.QueueDeclare().QueueName;
+            SendQueue(queueName, message, replyQueue);
+            ReceivingQueue(replyQueue).Subscribe(x =>
+                subject.OnNext(x)
+            );
+            return subject.AsObservable();
+        }
+        private void Connect()
         {
             _factory = new ConnectionFactory()
             {
@@ -77,6 +105,11 @@ namespace Lib.RabbitMQ
         }
         private void QueueDeclare(string queueName)
         {
+            // 由 RabbitMQ 建立的匿名 Queue 不需要確認
+            if (queueName.StartsWith("amq."))
+            {
+                return;
+            }
             _channel.QueueDeclare(
                 queue: queueName,
                 durable: true,
