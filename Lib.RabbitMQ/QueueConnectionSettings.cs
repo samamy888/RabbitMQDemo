@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Lib.RabbitMQ
 {
@@ -14,8 +12,6 @@ namespace Lib.RabbitMQ
 
         public string Password { get; set; }
 
-        public int Times { get; set; }
-
-        public int Sleep { get; set; }
+        public bool IsOfficial { get; set; }
     }
 }

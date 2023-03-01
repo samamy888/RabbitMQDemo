@@ -21,9 +21,9 @@ namespace RabbitMQReceive
             var queueName = "TestQ";
             Console.WriteLine("等候消息中");
 
+            await _queueClient.ReceivingQueue(queueName, true);
             while (true)
             {
-                await _queueClient.ReceivingQueue(queueName,true);
                 await Task.Delay(100);
             }
         }
