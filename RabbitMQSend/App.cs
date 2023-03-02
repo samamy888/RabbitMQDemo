@@ -21,14 +21,25 @@ namespace RabbitMQSend
 
             //var queueName = "[Logistics] E-Can Make Txt and Uploading";
             var queueName = "TestQ";
-            var message = "Test";
+            var message = "bar";
+            var queueName2 = "TestQ2";
+            var message2 = "foo";
 
-            for (int i = 0; i <= _config.Times; i++)
-            {
-                var result = _queueClient.SendQueueAndWaitReply(queueName, message + i.ToString()).FirstAsync().ToTask().Result;
-                Console.WriteLine("times = {0}", i);
-                Thread.Sleep(_config.Sleep);
-            }
+            var result = _queueClient.SendQueueAndWaitReply(queueName, message)
+                .FirstAsync()
+                .ToTask()
+                .Result
+                .Message;
+
+            Console.WriteLine(result);
+
+            result = _queueClient.SendQueueAndWaitReply(queueName2, message2)
+                .FirstAsync()
+                .ToTask()
+                .Result
+                .Message;
+
+            Console.WriteLine(result);
         }
     }
 }

@@ -39,57 +39,39 @@ namespace Lib.RabbitMQ
                 basicProperties: properties,
                 body: body);
 
-            Console.WriteLine("{0} Sent {1}", queueName, message);
+            Console.WriteLine("QueueName : {0} Sent {1}", queueName, message);
 
         }
 
-        public IObservable<string> ReceivingQueue(string queueName, bool listener = false)
+        public IObservable<QueueHandler> ReceivingQueue(string queueName)
         {
             QueueDeclare(queueName);
 
             var consumer = new EventingBasicConsumer(_channel);
-            var subject = new ReplaySubject<string>();
+            var subject = new ReplaySubject<QueueHandler>();
             var replyQueue = _channel.QueueDeclare().QueueName;
             consumer.Received += (model, ea) =>
             {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
-
-                if (listener)
-                {
-                    var replyProps = _channel.CreateBasicProperties();
-                    replyProps.CorrelationId = ea.BasicProperties.CorrelationId;
-                    _channel.BasicPublish(
-                        exchange: string.Empty,
-                        routingKey: ea.BasicProperties.ReplyTo,
-                        mandatory: true,
-                        basicProperties: replyProps,
-                        body: body
-                    );
-                }
-
-                subject.OnNext(message);
-                Console.WriteLine("Received {0} ， Time = {1}", message, DateTime.Now.ToString("mm:ss fff"));
+                var handler = new QueueHandler(_channel,ea,message);
+                subject.OnNext(handler);
             };
 
             _channel.BasicConsume(
                 queue: queueName,
-                autoAck: true,
+                autoAck: false,
                 consumer: consumer
             );
 
             return subject.AsObservable();
         }
 
-        public IObservable<string> SendQueueAndWaitReply(string queueName, string message)
+        public IObservable<QueueHandler> SendQueueAndWaitReply(string queueName, string message)
         {
-            var subject = new ReplaySubject<string>();
             var replyQueue = _channel.QueueDeclare().QueueName;
             SendQueue(queueName, message, replyQueue);
-            ReceivingQueue(replyQueue).Subscribe(x =>
-                subject.OnNext(x)
-            );
-            return subject.AsObservable();
+            return ReceivingQueue(replyQueue);
         }
         private void Connect()
         {
