@@ -79,7 +79,8 @@ namespace Lib.RabbitMQ
             {
                 HostName = _config.HostName,
                 UserName = _config.UserName,
-                Password = _config.Password
+                Password = _config.Password,
+                VirtualHost = _config.VirtualHost,
             };
             _connection = _factory.CreateConnection();
             _channel = _connection.CreateModel();

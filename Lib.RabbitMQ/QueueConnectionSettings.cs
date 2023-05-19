@@ -14,6 +14,8 @@ namespace Lib.RabbitMQ
 
         public string Password { get; set; }
 
+        public string VirtualHost { get; set; }
+
         public int Times { get; set; }
 
         public int Sleep { get; set; }
